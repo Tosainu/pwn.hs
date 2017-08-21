@@ -20,6 +20,7 @@ library
                      , Pwn.Log
                      , Pwn.Packing
                      , Pwn.Tubes
+                     , Pwn.Tubes.Socket
                      , Pwn.Tubes.Tube
   build-depends:       base >= 4.7 && < 5
                      , bytestring
