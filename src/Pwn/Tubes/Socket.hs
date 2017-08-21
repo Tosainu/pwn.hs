@@ -3,15 +3,20 @@ module Pwn.Tubes.Socket
   , remote
   ) where
 
-import           Control.Monad.IO.Class (liftIO)
-import           Data.ByteString.Char8  (ByteString)
-import qualified Data.ByteString.Char8  as BS
-import           Data.Monoid            ((<>))
-import qualified Network.Socket         as NS
+import           Control.Concurrent           (forkIO, killThread)
+import           Control.Monad.IO.Class       (liftIO)
+import           Control.Monad.Trans.Class    (lift)
+import           Control.Monad.Trans.Resource
+import           Data.ByteString.Char8        (ByteString)
+import qualified Data.ByteString.Char8        as BS
+import           Data.Conduit                 (($$))
+import           Data.Conduit.Binary          (sinkHandle, sourceHandle)
+import           Data.Monoid                  ((<>))
+import qualified Network.Socket               as NS
 import           System.IO
 
 import           Pwn.Log
-import qualified Pwn.Tubes.Tube         as T
+import qualified Pwn.Tubes.Tube               as T
 
 data Socket = Socket { address :: String
                      , port    :: Int
@@ -58,4 +63,12 @@ shutdown :: Socket -> IO ()
 shutdown = close
 
 interactive :: Socket -> IO ()
-interactive _ = error "not implemented yet"
+interactive Socket { hsocket = hsock } = do
+  info "Entering interactive mode"
+  runResourceT $ do
+    (rthread, _) <- allocate(forkIO $ runResourceT $ do
+      sourceHandle hsock $$ sinkHandle stdout
+      liftIO $ info "Connection closed") killThread
+    lift $ sourceHandle stdin $$ sinkHandle hsock
+    release rthread
+  info "Leaving interactive mode"
