@@ -19,9 +19,11 @@ library
   exposed-modules:     Pwn
                      , Pwn.Log
                      , Pwn.Packing
+                     , Pwn.Tubes
                      , Pwn.Tubes.Tube
   build-depends:       base >= 4.7 && < 5
                      , bytestring
+                     , network
   default-language:    Haskell2010
 
 executable example
