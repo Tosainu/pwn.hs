@@ -18,6 +18,7 @@ data Socket = Socket { address :: String
                      }
 
 instance T.Tube Socket where
+  recv  = recv
   recvn = recvn
   send  = send
   wait  = wait
@@ -34,6 +35,9 @@ remote a p = do
   NS.connect sock (NS.addrAddress ai)
   liftIO $ success $ logstr <> ": Done"
   return $ Socket a p sock
+
+recv :: Socket -> IO ByteString
+recv sock = recvn sock 4096
 
 recvn :: Socket -> Int -> IO ByteString
 recvn sock len = NS.recv (socket sock) len
