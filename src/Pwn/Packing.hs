@@ -1,5 +1,5 @@
 module Pwn.Packing
-  ( Endian
+  ( Endian (..)
   , pack
   , p32
   , p32be
