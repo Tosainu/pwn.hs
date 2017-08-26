@@ -48,10 +48,10 @@ recv :: Socket -> IO ByteString
 recv sock = BS.hGetSome (hsocket sock) 4096
 
 recvn :: Socket -> Int -> IO ByteString
-recvn sock len = BS.hGet (hsocket sock) len
+recvn sock = BS.hGet (hsocket sock)
 
 send :: Socket -> ByteString -> IO ()
-send sock str = BS.hPut (hsocket sock) str
+send sock = BS.hPut (hsocket sock)
 
 wait :: Socket -> IO ()
 wait _ = error "not implemented yet"

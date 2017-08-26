@@ -4,6 +4,7 @@ module Pwn.Tubes.Process
   ) where
 
 import           Control.Concurrent           (forkIO, killThread)
+import           Control.Monad                (void)
 import           Control.Monad.IO.Class       (liftIO)
 import           Control.Monad.Trans.Class    (lift)
 import           Control.Monad.Trans.Resource
@@ -39,7 +40,7 @@ instance T.Tube Process where
 
 -- https://stackoverflow.com/a/27388709
 getPid :: ProcessHandle -> IO (Maybe CPid)
-getPid ph = withProcessHandle ph $ \ph_ -> do
+getPid ph = withProcessHandle ph $ \ph_ ->
   case ph_ of
         OpenHandle x   -> return $ Just x
         ClosedHandle _ -> return Nothing
@@ -61,13 +62,13 @@ recv :: Process -> IO ByteString
 recv p = BS.hGetSome (hstdout p) 4096
 
 recvn :: Process -> Int -> IO ByteString
-recvn p len = BS.hGet (hstdout p) len
+recvn p = BS.hGet (hstdout p)
 
 send :: Process -> ByteString -> IO ()
-send p str = BS.hPut (hstdin p) str
+send p = BS.hPut (hstdin p)
 
 wait :: Process -> IO ()
-wait p = waitForProcess (hproc p) >> return ()
+wait p = void $ waitForProcess $ hproc p
 
 close :: Process -> IO ()
 close = terminateProcess . hproc

@@ -21,7 +21,7 @@ import           Data.Word             (Word32, Word64)
 data Endian = Little | Big deriving Eq
 
 nthByte :: (Bits a, Integral a) => (a, Int) -> Char
-nthByte (x, n) = chr . fromIntegral $ shiftR (x .&. (shiftL 0xff b)) b
+nthByte (x, n) = chr . fromIntegral $ shiftR (x .&. shiftL 0xff b) b
   where b = n * 8
 
 toBytes :: Int -> Int

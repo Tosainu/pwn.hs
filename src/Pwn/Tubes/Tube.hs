@@ -26,9 +26,8 @@ recvuntil :: (Tube a) => a -> ByteString -> IO ByteString
 recvuntil tube suff = recvuntil' BS.empty
   where recvuntil' buf = do
           newbuf <- BS.append buf <$> recvn tube 1
-          case BS.isSuffixOf suff newbuf of
-               True  -> return newbuf
-               False -> recvuntil' newbuf
+          if BS.isSuffixOf suff newbuf then return newbuf
+                                       else recvuntil' newbuf
 
 sendline :: (Tube a) => a -> ByteString -> IO ()
 sendline tube = send tube . appendNL
