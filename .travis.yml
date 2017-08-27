@@ -7,7 +7,6 @@ cache:
   directories:
     - $HOME/.cabal
     - $HOME/.ghc
-    - $HOME/.local/bin
     - $HOME/.stack
 
 addons:
@@ -19,16 +18,20 @@ before_install:
   - |
     mkdir -p ~/.local/bin
     export PATH=$HOME/.local/bin:$PATH
-    if ! type stack > /dev/null; then
-      travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-    fi
-    stack --no-terminal upgrade
-  - stack --no-terminal --version
+  # Install stack
+  - |
+    travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+    stack --no-terminal --version
+  # Install Stack HPC Coveralls
+  - |
+    travis_retry curl -L https://github.com/rubik/stack-hpc-coveralls/releases/download/v0.0.4.0/shc-linux-x64-8.0.1.tar.bz2 | tar jx -C ~/.local/bin
 
 install:
   - travis_retry stack --no-terminal --install-ghc setup
   - stack --no-terminal exec ghc -- --version
 
 script:
-  - stack --no-terminal build
-  - stack --no-terminal test
+  - stack --no-terminal test :pwn-test --coverage
+
+after_script:
+  - shc pwn pwn-test
