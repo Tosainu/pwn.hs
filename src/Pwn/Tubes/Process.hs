@@ -14,7 +14,6 @@ import           Data.Conduit                 (($$))
 import           Data.Conduit.Binary          (sinkHandle, sourceHandle)
 import           Data.Monoid                  ((<>))
 import           System.IO
-import           System.Posix.Types           (CPid)
 import           System.Process
 import           System.Process.Internals
 
@@ -23,7 +22,7 @@ import qualified Pwn.Tubes.Tube               as T
 
 data Process = Process { commmand :: FilePath
              , args               :: [String]
-             , pid                :: CPid
+             , pid                :: Int
              , hstdin             :: Handle
              , hstdout            :: Handle
              , hproc              :: ProcessHandle
@@ -39,11 +38,11 @@ instance T.Tube Process where
   interactive = interactive
 
 -- https://stackoverflow.com/a/27388709
-getPid :: ProcessHandle -> IO (Maybe CPid)
+getPid :: ProcessHandle -> IO (Maybe Int)
 getPid ph = withProcessHandle ph $ \ph_ ->
-  case ph_ of
-        OpenHandle x   -> return $ Just x
-        ClosedHandle _ -> return Nothing
+  return $ case ph_ of
+                OpenHandle x   -> Just $ fromIntegral x
+                ClosedHandle _ -> Nothing
 
 process :: String -> [String] -> IO Process
 process c a = do
