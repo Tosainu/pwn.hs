@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Pwn.Tubes.Socket
   ( Socket (..)
   , remote
@@ -33,16 +35,16 @@ instance T.Tube Socket where
   interactive = interactive
 
 remote :: String -> Int -> IO Socket
-remote a p = do
-  let logstr = "Opening connection to " <> a <> " on port " <> show p
+remote address port = do
+  let logstr = "Opening connection to " <> address <> " on port " <> show port
   liftIO $ status logstr
-  ai <- head <$> NS.getAddrInfo Nothing (Just a) (Just $ show p)
+  ai <- head <$> NS.getAddrInfo Nothing (Just address) (Just $ show port)
   sock <- NS.socket (NS.addrFamily ai) NS.Stream NS.defaultProtocol
   NS.connect sock (NS.addrAddress ai)
-  h <- NS.socketToHandle sock ReadWriteMode
-  hSetBuffering h NoBuffering
+  hsocket <- NS.socketToHandle sock ReadWriteMode
+  hSetBuffering hsocket NoBuffering
   liftIO $ success $ logstr <> ": Done"
-  return $ Socket a p h
+  return Socket {..}
 
 recv :: Socket -> IO ByteString
 recv sock = BS.hGetSome (hsocket sock) 4096
