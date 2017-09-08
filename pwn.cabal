@@ -17,6 +17,7 @@ library
   hs-source-dirs:      src
   ghc-options:         -Wall
   exposed-modules:     Pwn
+                     , Pwn.Config
                      , Pwn.Log
                      , Pwn.Packing
                      , Pwn.Tubes
