@@ -1,6 +1,5 @@
 module Pwn.Packing
-  ( Endian (..)
-  , pack
+  ( pack
   , p32
   , p32be
   , p64
@@ -18,7 +17,7 @@ import qualified Data.ByteString.Char8 as BS
 import           Data.Char             (chr, ord)
 import           Data.Word             (Word32, Word64)
 
-data Endian = Little | Big deriving (Eq, Show)
+import           Pwn.Config
 
 nthByte :: (Bits a, Integral a) => (a, Int) -> Char
 nthByte (x, n) = chr . fromIntegral $ shiftR (x .&. shiftL 0xff b) b

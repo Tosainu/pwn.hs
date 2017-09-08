@@ -3,6 +3,7 @@
 
 module Pwn.Config
   ( Config (..)
+  , Endian (..)
   , MonadPwn (..)
   , Pwn
   , runPwn
@@ -11,13 +12,13 @@ module Pwn.Config
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Reader
 
-import           Pwn.Packing                (Endian (..))
-
 data Config = Config { arch   :: String
                      , bits   :: Int
                      , endian :: Endian
                      , os     :: String
                      } deriving (Eq, Show)
+
+data Endian = Little | Big deriving (Eq, Show)
 
 class MonadIO m => MonadPwn m where
   getConfig :: m Config
