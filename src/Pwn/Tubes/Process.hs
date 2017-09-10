@@ -8,7 +8,7 @@ module Pwn.Tubes.Process
 import           Control.Concurrent           (forkIO, killThread)
 import           Control.Monad                (void)
 import           Control.Monad.IO.Class       (liftIO)
-import           Control.Monad.Trans.Class    (lift)
+import           Control.Monad.Trans          (lift)
 import           Control.Monad.Trans.Resource
 import           Data.ByteString.Char8        (ByteString)
 import qualified Data.ByteString.Char8        as BS

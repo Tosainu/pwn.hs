@@ -32,10 +32,10 @@ library
                      , conduit-extra
                      , exceptions
                      , filepath
+                     , mtl
                      , network
                      , process
                      , resourcet
-                     , transformers
   default-language:    Haskell2010
 
 test-suite             pwn-test
