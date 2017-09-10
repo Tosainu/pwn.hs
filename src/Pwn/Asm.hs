@@ -11,6 +11,7 @@ import           Control.Monad
 import           Control.Monad.Catch
 import           Control.Monad.Reader
 import qualified Data.ByteString.Char8  as BS
+import           Data.Monoid            ((<>))
 import           Data.Typeable
 import           System.Directory       hiding (getTemporaryDirectory)
 import           System.Environment     (lookupEnv)
@@ -53,19 +54,31 @@ addAsmHeader src = addAsmHeader' <$> ask <*> return src
     addAsmHeader' _                         = id
 
 cpp :: Config -> FilePath -> FilePath -> IO ()
-cpp _ src dst = void $ runProcess "cpp" ["-o", dst, src]
+cpp Config { arch = a } src dst
+  | a == "i386"  = void $ runProcess "cpp" ["-o", dst, src]
+  | a == "amd64" = void $ runProcess "cpp" ["-o", dst, src]
+  | otherwise    = fail "Unknown architecture"
 
 as :: Config -> FilePath -> FilePath -> IO ()
-as _ src dst = void $ runProcess "as" ["--64", "-o", dst, src]
+as Config { arch = a } src dst
+  | a == "i386"  = void $ runProcess "as" ["-32", "-o", dst, src]
+  | a == "amd64" = void $ runProcess "as" ["-64", "-o", dst, src]
+  | otherwise    = fail "Unknown architecture"
 
 objcopy :: Config -> FilePath -> FilePath -> IO ()
-objcopy _ src dst = void $ runProcess "objcopy" ["-j", ".text", "-O", "binary", src, dst]
+objcopy Config { arch = a } src dst
+  | a == "i386"  = void $ runProcess "objcopy" ["-j", ".text", "-O", "binary", src, dst]
+  | a == "amd64" = void $ runProcess "objcopy" ["-j", ".text", "-O", "binary", src, dst]
+  | otherwise    = fail "Unknown architecture"
 
 objdump :: Config -> FilePath -> IO String
-objdump _ src = (stripHeader . fst) <$> runProcess "objdump"
-                               [ "-b", "binary" , "-m", "i386" , "-M", "intel,x86-64" , "-D", src ]
+objdump Config { arch = a } src
+  | a == "i386"  = objdump' ["-m", "i386", "-M", "intel,i386"]
+  | a == "amd64" = objdump' ["-m", "i386", "-M", "intel,x86-64"]
+  | otherwise    = fail "Unknown architecture"
   where
-    stripHeader = unlines . drop 6 . lines
+    objdump' opt = parseResult <$> runProcess "objdump" (opt <> ["-b", "binary" , "-D", src])
+    parseResult  = unlines . drop 6 . lines . fst
 
 newtype ProcessException = ProcessException (ExitCode, String) deriving (Show, Typeable)
 
