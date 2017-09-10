@@ -4,6 +4,7 @@ module Pwn.PackingSpec
   ) where
 
 import qualified Data.ByteString.Char8 as BS
+import           Pwn.Config
 import           Pwn.Packing
 import           Test.Hspec
 
