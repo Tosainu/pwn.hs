@@ -27,13 +27,13 @@ toBytes :: Int -> Int
 toBytes = flip quot 8
 
 pack :: (Bits a, Integral a) => Int -> Endian -> a -> Maybe ByteString
-pack size endian value
-  | size < 8 || mod size 8 /= 0 = Nothing
-  | endian == Little = Just $ pack' zipped
-  | endian == Big    = Just $ pack' . reverse $ zipped
+pack s e v
+  | s < 8 || s `mod` 8 /= 0 = Nothing
+  | e == Little = Just $ pack' zipped
+  | e == Big    = Just $ pack' . reverse $ zipped
   | otherwise        = Nothing
-  where bytes  = toBytes size
-        zipped = zip (replicate size value) [0..bytes - 1]
+  where bytes  = toBytes s
+        zipped = zip (replicate s v) [0..bytes - 1]
         pack'  = BS.pack . map nthByte
 
 p32 :: Word32 -> Maybe ByteString
@@ -49,13 +49,13 @@ p64be :: Word64 -> Maybe ByteString
 p64be = pack 64 Big
 
 unpack :: (Bits a, Integral a) => Int -> Endian -> ByteString -> Maybe a
-unpack size endian str
-  | size < 8 || mod size 8 /= 0 || BS.length str /= bytes = Nothing
-  | endian == Little = Just $ unpack' $ zip ustr [0..bytes - 1]
-  | endian == Big    = Just $ unpack' $ zip ustr $ reverse [0..bytes - 1]
+unpack s e v
+  | s < 8 || s `mod` 8 /= 0 || BS.length v /= bytes = Nothing
+  | e == Little = Just $ unpack' $ zip ustr [0..bytes - 1]
+  | e == Big    = Just $ unpack' $ zip ustr $ reverse [0..bytes - 1]
   | otherwise        = Nothing
-  where bytes = toBytes size
-        ustr  = map (fromIntegral . ord) . BS.unpack $ str
+  where bytes = toBytes s
+        ustr  = map (fromIntegral . ord) . BS.unpack $ v
         unpack' = sum . map (\(x, n) -> shiftL x $ n * 8)
 
 u32 :: ByteString -> Maybe Word32
