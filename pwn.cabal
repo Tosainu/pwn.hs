@@ -22,7 +22,7 @@ library
                      , Pwn.Log
                      , Pwn.Packing
                      , Pwn.Tubes
-                     , Pwn.Tubes.Process
+  other-modules:       Pwn.Tubes.Process
                      , Pwn.Tubes.Socket
                      , Pwn.Tubes.Tube
   build-depends:       base >= 4.7 && < 5
