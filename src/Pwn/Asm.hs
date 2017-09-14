@@ -2,10 +2,7 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Pwn.Asm
-  ( asm
-  , disasm
-  ) where
+module Pwn.Asm where
 
 import           Control.Monad
 import           Control.Monad.Catch

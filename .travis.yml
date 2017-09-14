@@ -12,6 +12,7 @@ cache:
 addons:
   apt:
     packages:
+      - build-essential
       - libgmp-dev
 
 before_install:
