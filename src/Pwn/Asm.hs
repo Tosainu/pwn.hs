@@ -13,10 +13,10 @@ import           Control.Monad.Reader
 import qualified Data.ByteString.Char8  as BS
 import           Data.Monoid            ((<>))
 import           Data.Typeable
-import           System.Directory       hiding (getTemporaryDirectory)
+import qualified System.Directory       as SD
 import           System.Environment     (lookupEnv)
 import           System.Exit            (ExitCode (..))
-import           System.FilePath        ((</>))
+import           System.FilePath        (FilePath, (</>))
 import           System.Process         (readProcessWithExitCode)
 
 import           Pwn.Config
@@ -92,14 +92,12 @@ handleProcessException (ExitSuccess, out, err)  = return (out, err)
 handleProcessException (excode, _, err)         = throwM $ ProcessException (excode, err)
 
 withTemporaryDirectory :: String -> (FilePath -> IO a) -> IO a
-withTemporaryDirectory prefix = bracket (createTemporaryDirectory prefix) removeDirectoryRecursive
+withTemporaryDirectory prefix = bracket (createTemporaryDirectory prefix) SD.removeDirectoryRecursive
 
-getTemporaryDirectory :: IO (Maybe FilePath)
-getTemporaryDirectory = lookupEnv "XDG_RUNTIME_DIR"   -- TODO: suppport other directories
+getTemporaryDirectory :: IO FilePath
+getTemporaryDirectory = lookupEnv "XDG_RUNTIME_DIR" >>= maybe SD.getTemporaryDirectory return
 
 createTemporaryDirectory :: String -> IO FilePath
 createTemporaryDirectory prefix = do
   tempdir <- getTemporaryDirectory                    -- TODO: use prefix-pid
-  case tempdir of
-       Just path  -> createDirectory (path </> prefix) >> return (path </> prefix)
-       Nothing    -> fail "Could not get temporary directory"
+  SD.createDirectory (tempdir </> prefix) >> return (tempdir </> prefix)
