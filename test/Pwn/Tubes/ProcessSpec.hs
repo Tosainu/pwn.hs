@@ -5,8 +5,7 @@ module Pwn.Tubes.ProcessSpec
 
 import           Control.Exception     (bracket)
 import qualified Data.ByteString.Char8 as BS
-import           Pwn.Tubes.Process
-import           Pwn.Tubes.Tube
+import           Pwn.Tubes
 import           Test.Hspec
 
 main :: IO ()
