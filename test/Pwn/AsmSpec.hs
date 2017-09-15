@@ -9,8 +9,6 @@ import           Control.Monad.Reader (runReaderT)
 import           Data.Either
 import           Pwn.Asm
 import           Pwn.Config
-import qualified System.Directory     as SD
-import           System.Environment
 import           Test.Hspec
 
 main :: IO ()
@@ -39,17 +37,6 @@ invalidConfig = Config { arch = "poe"
 
 spec :: Spec
 spec = do
-  describe "Pwn.Asm.getTemporaryDirectory" $ do
-    it "use $XDG_RUNTIME_DIR if available" $ do
-      setEnv "XDG_RUNTIME_DIR" "/path/to/tmpdir"
-      tempdir1 <- getTemporaryDirectory
-      tempdir1 `shouldBe` "/path/to/tmpdir"
-
-      unsetEnv "XDG_RUNTIME_DIR"
-      tempdir2 <- getTemporaryDirectory
-      tempdir3 <- SD.getTemporaryDirectory
-      tempdir2 `shouldBe` tempdir3
-
   describe "Pwn.Asm.asm" $ do
     it "assemble i386 code" $ do
       let src = "xor ebx, ebx ; mov eax, 0x1 ; int 0x80"

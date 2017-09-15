@@ -7,16 +7,12 @@ module Pwn.Asm where
 import           Control.Monad
 import           Control.Monad.Catch
 import           Control.Monad.Reader
-import qualified Data.ByteString.Char8  as BS
-import           Data.Monoid            ((<>))
-import           Data.Typeable
-import qualified System.Directory       as SD
-import           System.Environment     (lookupEnv)
-import           System.Exit            (ExitCode (..))
-import           System.FilePath        (FilePath, (</>))
-import           System.Process         (readProcessWithExitCode)
+import qualified Data.ByteString.Char8 as BS
+import           Data.Monoid           ((<>))
+import           System.FilePath
 
 import           Pwn.Config
+import           Util
 
 asm :: (MonadReader Config m, MonadIO m) => BS.ByteString -> m (Either String BS.ByteString)
 asm src = do
@@ -76,25 +72,3 @@ objdump Config { arch = a } src
   where
     objdump' opt = parseResult <$> runProcess "objdump" (opt <> ["-b", "binary" , "-D", src])
     parseResult  = unlines . drop 6 . lines . fst
-
-newtype ProcessException = ProcessException (ExitCode, String) deriving (Show, Typeable)
-
-instance Exception ProcessException
-
-runProcess :: FilePath -> [String] -> IO (String, String)
-runProcess cmd args = readProcessWithExitCode cmd args "" >>= handleProcessException
-
-handleProcessException :: (MonadThrow m) => (ExitCode, String, String) -> m (String, String)
-handleProcessException (ExitSuccess, out, err)  = return (out, err)
-handleProcessException (excode, _, err)         = throwM $ ProcessException (excode, err)
-
-withTemporaryDirectory :: String -> (FilePath -> IO a) -> IO a
-withTemporaryDirectory prefix = bracket (createTemporaryDirectory prefix) SD.removeDirectoryRecursive
-
-getTemporaryDirectory :: IO FilePath
-getTemporaryDirectory = lookupEnv "XDG_RUNTIME_DIR" >>= maybe SD.getTemporaryDirectory return
-
-createTemporaryDirectory :: String -> IO FilePath
-createTemporaryDirectory prefix = do
-  tempdir <- getTemporaryDirectory                    -- TODO: use prefix-pid
-  SD.createDirectory (tempdir </> prefix) >> return (tempdir </> prefix)
