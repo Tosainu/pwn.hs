@@ -15,6 +15,9 @@ main = hspec spec
 withEcho :: (Process -> IO ()) -> IO ()
 withEcho = bracket (process "echo" [teststr]) wait
 
+withCat :: (Process -> IO ()) -> IO ()
+withCat = bracket (process "cat" []) close
+
 teststr :: String
 teststr = teststr1 ++ "\n" ++ teststr2
 
@@ -25,8 +28,8 @@ teststr2 :: String
 teststr2 = "hijklmn"
 
 spec :: Spec
-spec = around withEcho $ do
-  describe "Pwn.Tubes.Process.recv*" $ do
+spec = do
+  around withEcho $ describe "Pwn.Tubes.Process.recv*" $ do
     it "recv" $ \proc -> do
       let s = BS.pack $ teststr ++ "\n"
       r <- recv proc
@@ -53,3 +56,17 @@ spec = around withEcho $ do
       let s = BS.pack $ drop 3 teststr1
       r <- recvuntil proc s
       r `shouldBe` BS.pack teststr1
+
+  around withCat $ describe "Pwn.Tubes.Process.send*" $ do
+    it "send" $ \proc -> do
+      let s = BS.pack teststr
+      send proc s
+      r <- recv proc
+      r `shouldBe` s
+
+    it "sendline" $ \proc -> do
+      let s1 = BS.pack $ teststr1
+          s2 = BS.pack $ teststr1 ++ "\n"
+      sendline proc s1
+      r <- recv proc
+      r `shouldBe` s2
