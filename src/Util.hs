@@ -8,6 +8,8 @@ import qualified System.Directory     as SD
 import           System.Environment   (lookupEnv)
 import           System.Exit          (ExitCode (..))
 import           System.FilePath
+import           System.IO
+import           System.IO.Error      (eofErrorType, mkIOError)
 import           System.Posix.Process (getProcessID)
 import           System.Process       (readProcessWithExitCode)
 
@@ -41,3 +43,9 @@ createTemporaryDirectory prefix = do
   pid <- getProcessID
   let tempdir = dir </> (prefix ++ "-" ++ show pid)
   SD.createDirectory tempdir >> return tempdir
+
+----------------------------------------------------------------
+-- IO Exceptions
+
+eofError :: Handle -> String -> IO a
+eofError h fn = ioError $ mkIOError eofErrorType fn (Just h) Nothing

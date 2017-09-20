@@ -6,6 +6,7 @@ module Pwn.Tubes.ProcessSpec
 import           Control.Exception     (bracket)
 import qualified Data.ByteString.Char8 as BS
 import           Pwn.Tubes
+import           System.IO.Error       (isEOFError)
 import           Test.Hspec
 
 main :: IO ()
@@ -39,6 +40,9 @@ spec = around withEcho $ do
 
       r2 <- recvn proc 3
       r2 `shouldBe` s2
+
+    it "recvn EOFerror" $ \proc -> do
+      recvn proc 999 `shouldThrow` isEOFError
 
     it "recvline" $ \proc -> do
       let s = BS.pack $ teststr1 ++ "\n"

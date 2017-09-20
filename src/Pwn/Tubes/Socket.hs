@@ -19,6 +19,7 @@ import           System.IO
 
 import           Pwn.Log
 import qualified Pwn.Tubes.Tube               as T
+import           Util                         (eofError)
 
 data Socket = Socket { address :: String
                      , port    :: Int
@@ -50,7 +51,10 @@ recv :: Socket -> IO ByteString
 recv sock = BS.hGetSome (hsocket sock) 4096
 
 recvn :: Socket -> Int -> IO ByteString
-recvn sock = BS.hGet (hsocket sock)
+recvn sock len = do
+  r <- BS.hGet (hsocket sock) len
+  if BS.length r < len then eofError (hsocket sock) "recvn"
+                       else return r
 
 send :: Socket -> ByteString -> IO ()
 send sock = BS.hPut (hsocket sock)

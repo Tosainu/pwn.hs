@@ -21,6 +21,7 @@ import           System.Process.Internals
 
 import           Pwn.Log
 import qualified Pwn.Tubes.Tube               as T
+import           Util                         (eofError)
 
 data Process = Process { commmand :: FilePath
              , args               :: [String]
@@ -63,7 +64,10 @@ recv :: Process -> IO ByteString
 recv p = BS.hGetSome (hstdout p) 4096
 
 recvn :: Process -> Int -> IO ByteString
-recvn p = BS.hGet (hstdout p)
+recvn p len = do
+  r <- BS.hGet (hstdout p) len
+  if BS.length r < len then eofError (hstdout p) "recvn"
+                       else return r
 
 send :: Process -> ByteString -> IO ()
 send p = BS.hPut (hstdin p)
