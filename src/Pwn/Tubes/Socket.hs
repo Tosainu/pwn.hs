@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module Pwn.Tubes.Socket
   ( Socket (..)
   , remote
@@ -12,35 +10,35 @@ import           System.IO
 import           Pwn.Log
 import qualified Pwn.Tubes.Tube         as T
 
-data Socket = Socket { address :: String
-                     , port    :: Int
-                     , hsocket :: Handle
+data Socket = Socket { address      :: String
+                     , portNumber   :: Int
+                     , socketHandle :: Handle
                      }
 
 instance T.Tube Socket where
-  inputHandle  = hsocket
-  outputHandle = hsocket
+  inputHandle  = socketHandle
+  outputHandle = socketHandle
   wait         = wait
   close        = close
   shutdown     = shutdown
 
 remote :: String -> Int -> IO Socket
-remote address port = do
-  let logstr = "Opening connection to " <> address <> " on port " <> show port
+remote addr port = do
+  let logstr = "Opening connection to " <> addr <> " on port " <> show port
   status logstr
-  ai <- head <$> NS.getAddrInfo Nothing (Just address) (Just $ show port)
+  ai <- head <$> NS.getAddrInfo Nothing (Just addr) (Just $ show port)
   sock <- NS.socket (NS.addrFamily ai) NS.Stream NS.defaultProtocol
   NS.connect sock (NS.addrAddress ai)
-  hsocket <- NS.socketToHandle sock ReadWriteMode
-  hSetBuffering hsocket NoBuffering
+  hsock <- NS.socketToHandle sock ReadWriteMode
+  hSetBuffering hsock NoBuffering
   success $ logstr <> ": Done"
-  return Socket {..}
+  return $ Socket addr port hsock
 
 wait :: Socket -> IO ()
 wait _ = error "not implemented yet"
 
 close :: Socket -> IO ()
-close = hClose . hsocket
+close = hClose . socketHandle
 
 shutdown :: Socket -> IO ()
 shutdown = close
