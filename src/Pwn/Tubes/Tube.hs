@@ -1,11 +1,9 @@
 module Pwn.Tubes.Tube where
 
 import           Control.Concurrent           (forkIO, killThread)
-import           Control.Monad.IO.Class       (liftIO)
-import           Control.Monad.Trans          (lift)
 import           Control.Monad.Trans.Resource
 import qualified Data.ByteString.Char8        as BS
-import           Data.Conduit                 (($$))
+import           Data.Conduit                 (runConduit, (.|))
 import           Data.Conduit.Binary          (sinkHandle, sourceHandle)
 import           System.IO
 
@@ -55,9 +53,9 @@ interactive :: (Tube a) => a -> IO ()
 interactive tube = do
   info "Entering interactive mode"
   runResourceT $ do
-    (rthread, _) <- allocate(forkIO $ runResourceT $ do
-      sourceHandle (outputHandle tube) $$ sinkHandle stdout
-      liftIO $ info "Connection closed") killThread
-    lift $ sourceHandle stdin $$ sinkHandle (inputHandle tube)
+    (rthread, _) <- allocate (forkIO $ do
+      runResourceT $ runConduit $ sourceHandle (outputHandle tube) .| sinkHandle stdout
+      info "Connection closed") killThread
+    runConduit $ sourceHandle stdin .| sinkHandle (inputHandle tube)
     release rthread
   info "Leaving interactive mode"
