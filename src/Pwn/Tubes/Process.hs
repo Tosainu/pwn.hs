@@ -5,23 +5,15 @@ module Pwn.Tubes.Process
   , process
   ) where
 
-import           Control.Concurrent           (forkIO, killThread)
-import           Control.Monad                (void)
-import           Control.Monad.IO.Class       (liftIO)
-import           Control.Monad.Trans          (lift)
-import           Control.Monad.Trans.Resource
-import           Data.ByteString.Char8        (ByteString)
-import qualified Data.ByteString.Char8        as BS
-import           Data.Conduit                 (($$))
-import           Data.Conduit.Binary          (sinkHandle, sourceHandle)
-import           Data.Monoid                  ((<>))
+import           Control.Monad            (void)
+import           Control.Monad.IO.Class   (liftIO)
+import           Data.Monoid              ((<>))
 import           System.IO
 import           System.Process
 import           System.Process.Internals
 
 import           Pwn.Log
-import qualified Pwn.Tubes.Tube               as T
-import           Util                         (eofError)
+import qualified Pwn.Tubes.Tube           as T
 
 data Process = Process { commmand :: FilePath
              , args               :: [String]
@@ -32,13 +24,11 @@ data Process = Process { commmand :: FilePath
              }
 
 instance T.Tube Process where
-  recv  = recv
-  recvn = recvn
-  send  = send
-  wait  = wait
-  close = close
-  shutdown = shutdown
-  interactive = interactive
+  inputHandle  = hstdin
+  outputHandle = hstdout
+  wait         = wait
+  close        = close
+  shutdown     = shutdown
 
 -- https://stackoverflow.com/a/27388709
 getPid :: ProcessHandle -> IO (Maybe Int)
@@ -60,18 +50,6 @@ process commmand args = do
   mapM_ (`hSetBuffering` NoBuffering) [ hstdin, hstdout ]
   return Process {..}
 
-recv :: Process -> IO ByteString
-recv p = BS.hGetSome (hstdout p) 4096
-
-recvn :: Process -> Int -> IO ByteString
-recvn p len = do
-  r <- BS.hGet (hstdout p) len
-  if BS.length r < len then eofError (hstdout p) "recvn"
-                       else return r
-
-send :: Process -> ByteString -> IO ()
-send p = BS.hPut (hstdin p)
-
 wait :: Process -> IO ()
 wait p = void $ waitForProcess $ hproc p
 
@@ -80,16 +58,3 @@ close = terminateProcess . hproc
 
 shutdown :: Process -> IO ()
 shutdown = close
-
-interactive :: Process -> IO ()
-interactive p = do
-  info "Entering interactive mode"
-  let hi = hstdin p
-      ho = hstdout p
-  runResourceT $ do
-    (rthread, _) <- allocate(forkIO $ runResourceT $ do
-      sourceHandle ho $$ sinkHandle stdout
-      liftIO $ info "Connection closed") killThread
-    lift $ sourceHandle stdin $$ sinkHandle hi
-    release rthread
-  info "Leaving interactive mode"

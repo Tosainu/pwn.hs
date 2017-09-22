@@ -5,21 +5,13 @@ module Pwn.Tubes.Socket
   , remote
   ) where
 
-import           Control.Concurrent           (forkIO, killThread)
-import           Control.Monad.IO.Class       (liftIO)
-import           Control.Monad.Trans          (lift)
-import           Control.Monad.Trans.Resource
-import           Data.ByteString.Char8        (ByteString)
-import qualified Data.ByteString.Char8        as BS
-import           Data.Conduit                 (($$))
-import           Data.Conduit.Binary          (sinkHandle, sourceHandle)
-import           Data.Monoid                  ((<>))
-import qualified Network.Socket               as NS
+import           Control.Monad.IO.Class (liftIO)
+import           Data.Monoid            ((<>))
+import qualified Network.Socket         as NS
 import           System.IO
 
 import           Pwn.Log
-import qualified Pwn.Tubes.Tube               as T
-import           Util                         (eofError)
+import qualified Pwn.Tubes.Tube         as T
 
 data Socket = Socket { address :: String
                      , port    :: Int
@@ -27,13 +19,11 @@ data Socket = Socket { address :: String
                      }
 
 instance T.Tube Socket where
-  recv  = recv
-  recvn = recvn
-  send  = send
-  wait  = wait
-  close = close
-  shutdown = shutdown
-  interactive = interactive
+  inputHandle  = hsocket
+  outputHandle = hsocket
+  wait         = wait
+  close        = close
+  shutdown     = shutdown
 
 remote :: String -> Int -> IO Socket
 remote address port = do
@@ -47,18 +37,6 @@ remote address port = do
   liftIO $ success $ logstr <> ": Done"
   return Socket {..}
 
-recv :: Socket -> IO ByteString
-recv sock = BS.hGetSome (hsocket sock) 4096
-
-recvn :: Socket -> Int -> IO ByteString
-recvn sock len = do
-  r <- BS.hGet (hsocket sock) len
-  if BS.length r < len then eofError (hsocket sock) "recvn"
-                       else return r
-
-send :: Socket -> ByteString -> IO ()
-send sock = BS.hPut (hsocket sock)
-
 wait :: Socket -> IO ()
 wait _ = error "not implemented yet"
 
@@ -67,14 +45,3 @@ close = hClose . hsocket
 
 shutdown :: Socket -> IO ()
 shutdown = close
-
-interactive :: Socket -> IO ()
-interactive Socket { hsocket = hsock } = do
-  info "Entering interactive mode"
-  runResourceT $ do
-    (rthread, _) <- allocate(forkIO $ runResourceT $ do
-      sourceHandle hsock $$ sinkHandle stdout
-      liftIO $ info "Connection closed") killThread
-    lift $ sourceHandle stdin $$ sinkHandle hsock
-    release rthread
-  info "Leaving interactive mode"
