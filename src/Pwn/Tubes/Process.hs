@@ -1,5 +1,5 @@
 module Pwn.Tubes.Process
-  ( Process (..)
+  ( Process (commandName, commandArgs, processID)
   , process
   ) where
 

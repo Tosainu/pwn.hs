@@ -1,5 +1,5 @@
 module Pwn.Tubes.Socket
-  ( Socket (..)
+  ( Socket (address, portNumber)
   , remote
   ) where
 
