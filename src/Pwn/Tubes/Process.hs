@@ -6,7 +6,6 @@ module Pwn.Tubes.Process
   ) where
 
 import           Control.Monad            (void)
-import           Control.Monad.IO.Class   (liftIO)
 import           Data.Monoid              ((<>))
 import           System.IO
 import           System.Process
@@ -40,13 +39,13 @@ getPid ph = withProcessHandle ph $ \ph_ ->
 process :: FilePath -> [String] -> IO Process
 process commmand args = do
   let logstr = "Starting process '" <> commmand <> "'"
-  liftIO $ status logstr
+  status logstr
   (Just hstdin, Just hstdout, _, hproc)
       <- createProcess (proc commmand args) { std_in  = CreatePipe
                                             , std_out = CreatePipe
                                             }
   Just pid <- getPid hproc
-  liftIO $ success $ logstr <> ": Done (pid " <> show pid <> ")"
+  success $ logstr <> ": Done (pid " <> show pid <> ")"
   mapM_ (`hSetBuffering` NoBuffering) [ hstdin, hstdout ]
   return Process {..}
 

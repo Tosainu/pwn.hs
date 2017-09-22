@@ -5,7 +5,6 @@ module Pwn.Tubes.Socket
   , remote
   ) where
 
-import           Control.Monad.IO.Class (liftIO)
 import           Data.Monoid            ((<>))
 import qualified Network.Socket         as NS
 import           System.IO
@@ -28,13 +27,13 @@ instance T.Tube Socket where
 remote :: String -> Int -> IO Socket
 remote address port = do
   let logstr = "Opening connection to " <> address <> " on port " <> show port
-  liftIO $ status logstr
+  status logstr
   ai <- head <$> NS.getAddrInfo Nothing (Just address) (Just $ show port)
   sock <- NS.socket (NS.addrFamily ai) NS.Stream NS.defaultProtocol
   NS.connect sock (NS.addrAddress ai)
   hsocket <- NS.socketToHandle sock ReadWriteMode
   hSetBuffering hsocket NoBuffering
-  liftIO $ success $ logstr <> ": Done"
+  success $ logstr <> ": Done"
   return Socket {..}
 
 wait :: Socket -> IO ()
