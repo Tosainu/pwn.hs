@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module Pwn.Tubes.Process
   ( Process (..)
   , process
@@ -14,17 +12,17 @@ import           System.Process.Internals
 import           Pwn.Log
 import qualified Pwn.Tubes.Tube           as T
 
-data Process = Process { commmand :: FilePath
-             , args               :: [String]
-             , pid                :: Int
-             , hstdin             :: Handle
-             , hstdout            :: Handle
-             , hproc              :: ProcessHandle
-             }
+data Process = Process { commandName   :: FilePath
+                       , commandArgs   :: [String]
+                       , processID     :: Int
+                       , stdinHandle   :: Handle
+                       , stdoutHandle  :: Handle
+                       , processHandle :: ProcessHandle
+                       }
 
 instance T.Tube Process where
-  inputHandle  = hstdin
-  outputHandle = hstdout
+  inputHandle  = stdinHandle
+  outputHandle = stdoutHandle
   wait         = wait
   close        = close
   shutdown     = shutdown
@@ -37,23 +35,23 @@ getPid ph = withProcessHandle ph $ \ph_ ->
                 ClosedHandle _ -> Nothing
 
 process :: FilePath -> [String] -> IO Process
-process commmand args = do
-  let logstr = "Starting process '" <> commmand <> "'"
+process cmd args = do
+  let logstr = "Starting process '" <> cmd <> "'"
   status logstr
-  (Just hstdin, Just hstdout, _, hproc)
-      <- createProcess (proc commmand args) { std_in  = CreatePipe
-                                            , std_out = CreatePipe
-                                            }
-  Just pid <- getPid hproc
+  (Just ih, Just oh, _, ph) <-
+    createProcess (proc cmd args) { std_in  = CreatePipe
+                                  , std_out = CreatePipe
+                                  }
+  Just pid <- getPid ph
   success $ logstr <> ": Done (pid " <> show pid <> ")"
-  mapM_ (`hSetBuffering` NoBuffering) [ hstdin, hstdout ]
-  return Process {..}
+  mapM_ (`hSetBuffering` NoBuffering) [ ih, oh ]
+  return $ Process cmd args pid ih oh ph
 
 wait :: Process -> IO ()
-wait p = void $ waitForProcess $ hproc p
+wait p = void $ waitForProcess $ processHandle p
 
 close :: Process -> IO ()
-close = terminateProcess . hproc
+close = terminateProcess . processHandle
 
 shutdown :: Process -> IO ()
 shutdown = close
