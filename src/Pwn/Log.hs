@@ -7,53 +7,35 @@ module Pwn.Log
   , warning
   ) where
 
-import           Data.Monoid ((<>))
+import           System.Console.ANSI
 
-data TermCode = Reset
-              | Bold
-              | Black
-              | Red
-              | Green
-              | Yellow
-              | Blue
-              | Magenda
-              | Cyan
-              | White
-              deriving Eq
+type Symbol = (String, Color)
 
-instance Show TermCode where
-  show Reset   = "\x1b[0m"
-  show Bold    = "\x1b[1m"
-  show Black   = "\x1b[30m"
-  show Red     = "\x1b[31m"
-  show Green   = "\x1b[32m"
-  show Yellow  = "\x1b[33m"
-  show Blue    = "\x1b[34m"
-  show Magenda = "\x1b[35m"
-  show Cyan    = "\x1b[36m"
-  show White   = "\x1b[37m"
+printSymbol :: Symbol -> IO ()
+printSymbol (sym, color) = do
+  putStr "["
+  setSGR [SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid color]
+  putStr sym
+  setSGR [Reset]
+  putStr "] "
 
-markup :: [TermCode] -> String -> String
-markup tc str = concat $ tcstr ++ [str, show Reset]
-  where tcstr = map show tc
-
-message :: String -> String -> IO ()
-message sym str = putStrLn $ "[" <> sym <> "] " <> str
+message :: Symbol -> String -> IO ()
+message sym msg = printSymbol sym >> putStrLn msg
 
 status :: String -> IO ()
-status = message $ markup [Magenda] "x"
+status = message ("x", Magenta)
 
 success :: String -> IO ()
-success = message $ markup [Bold, Green] "+"
+success = message ("+", Green)
 
 failure :: String -> IO ()
-failure = message $ markup [Bold, Red]  "-"
+failure = message ("-", Red)
 
 debug :: String -> IO ()
-debug = message $ markup [Bold, Red] "DEBUG"
+debug = message ("DEBUG", Red)
 
 info :: String -> IO ()
-info = message $ markup [Bold, Blue] "*"
+info = message ("*", Blue)
 
 warning :: String -> IO ()
-warning = message $ markup [Bold, Yellow] "!"
+warning = message ("!", Yellow)

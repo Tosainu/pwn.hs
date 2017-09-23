@@ -28,6 +28,7 @@ library
                      , Pwn.Tubes.Tube
                      , Util
   build-depends:       base >= 4.7 && < 5
+                     , ansi-terminal
                      , bytestring
                      , directory
                      , conduit
