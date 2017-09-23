@@ -31,12 +31,7 @@ send :: (Tube a) => a -> BS.ByteString -> IO ()
 send tube = BS.hPut (inputHandle tube)
 
 recvline :: (Tube a) => a -> IO BS.ByteString
-recvline tube = recvline' BS.empty
-  where recvline' buf = do
-          newbuf <- BS.append buf <$> recvn tube 1
-          case BS.last newbuf of
-               '\n' -> return newbuf
-               _    -> recvline' newbuf
+recvline tube = recvuntil tube $ BS.singleton '\n'
 
 recvuntil :: (Tube a) => a -> BS.ByteString -> IO BS.ByteString
 recvuntil tube suff = recvuntil' BS.empty
