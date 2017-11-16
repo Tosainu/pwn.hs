@@ -1,0 +1,47 @@
+name:       pwn
+version:    '0.1.0.0'
+category:   Utils
+author:     Tosainu
+maintainer: tosainu.maple@gmail.com
+copyright:  2017 Tosainu
+license:    MIT
+github:     Tosainu/pwn.hs
+extra-source-files:
+  - README.md
+
+ghc-options: -Wall
+
+dependencies:
+  - base >=4.7 && <5
+  - bytestring
+  - directory
+  - mtl
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - Pwn
+    - Pwn.Asm
+    - Pwn.Config
+    - Pwn.Internal
+    - Pwn.Log
+    - Pwn.Packing
+    - Pwn.Tubes
+  dependencies:
+    - ansi-terminal
+    - conduit
+    - conduit-extra
+    - exceptions
+    - filepath
+    - network
+    - process
+    - resourcet
+    - unix
+
+tests:
+  pwn-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+      - hspec
+      - pwn
