@@ -32,7 +32,7 @@ getPid :: ProcessHandle -> IO (Maybe Int)
 getPid ph = withProcessHandle ph $ \ph_ ->
   return $ case ph_ of
                 OpenHandle x   -> Just $ fromIntegral x
-                ClosedHandle _ -> Nothing
+                _              -> Nothing
 
 process :: FilePath -> [String] -> IO Process
 process cmd args = do
