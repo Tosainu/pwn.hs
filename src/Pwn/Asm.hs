@@ -14,9 +14,9 @@ import           System.FilePath
 import           Pwn.Config
 import           Util
 
-asm :: (MonadReader Config m, MonadIO m) => BS.ByteString -> m (Either String BS.ByteString)
+asm :: MonadPwn m => BS.ByteString -> m (Either String BS.ByteString)
 asm src = do
-  config <- ask
+  config <- getPwnConfig
   src'   <- addAsmHeader src
   liftIO $ withTemporaryDirectory "pwn" (\path -> do
       let step1 = path </> "asm.S"
@@ -30,17 +30,17 @@ asm src = do
       Right <$> BS.readFile step4
     ) `catch` (\(e::SomeException) -> return $ Left $ show e)
 
-disasm :: (MonadReader Config m, MonadIO m) => BS.ByteString -> m (Either String BS.ByteString)
+disasm :: MonadPwn m => BS.ByteString -> m (Either String BS.ByteString)
 disasm src = do
-  config <- ask
+  config <- getPwnConfig
   liftIO $ withTemporaryDirectory "pwn" (\path -> do
       let step1 = path </> "src.bin"
       BS.writeFile step1 src
-      (Right . BS.pack) <$> objdump config step1
+      Right . BS.pack <$> objdump config step1
     ) `catch` (\(e::SomeException) -> return $ Left $ show e)
 
-addAsmHeader :: (MonadReader Config m, MonadIO m) => BS.ByteString -> m BS.ByteString
-addAsmHeader src = addAsmHeader' <$> ask <*> return src
+addAsmHeader :: MonadPwn m => BS.ByteString -> m BS.ByteString
+addAsmHeader src = addAsmHeader' <$> getPwnConfig <*> return src
   where
     addAsmHeader' Config { arch = "i386" }  = BS.append ".intel_syntax noprefix\n"
     addAsmHeader' Config { arch = "amd64" } = BS.append ".intel_syntax noprefix\n"

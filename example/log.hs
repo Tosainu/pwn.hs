@@ -1,7 +1,7 @@
 import           Pwn
 
 main :: IO ()
-main = do
+main = pwn $ do
   status  "status"
   success "success"
   failure "failure"

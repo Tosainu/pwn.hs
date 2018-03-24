@@ -4,11 +4,13 @@ module Pwn.Tubes.Process
   ) where
 
 import           Control.Monad            (void)
+import           Control.Monad.IO.Class
 import           Data.Monoid              ((<>))
 import           System.IO
 import           System.Process
 import           System.Process.Internals
 
+import           Pwn.Config
 import           Pwn.Log
 import qualified Pwn.Tubes.Tube           as T
 
@@ -34,24 +36,24 @@ getPid ph = withProcessHandle ph $ \ph_ ->
                 OpenHandle x -> Just $ fromIntegral x
                 _            -> Nothing
 
-process :: FilePath -> [String] -> IO Process
+process :: MonadPwn m => FilePath -> [String] -> m Process
 process cmd args = do
   let logstr = "Starting process '" <> cmd <> "'"
   status logstr
   (Just ih, Just oh, _, ph) <-
-    createProcess (proc cmd args) { std_in  = CreatePipe
-                                  , std_out = CreatePipe
-                                  }
-  Just pid <- getPid ph
+    liftIO $ createProcess (proc cmd args) { std_in  = CreatePipe
+                                           , std_out = CreatePipe
+                                           }
+  Just pid <- liftIO $ getPid ph
   success $ logstr <> ": Done (pid " <> show pid <> ")"
-  mapM_ (`hSetBuffering` NoBuffering) [ ih, oh ]
+  liftIO $ mapM_ (`hSetBuffering` NoBuffering) [ ih, oh ]
   return $ Process cmd args pid ih oh ph
 
-wait :: Process -> IO ()
-wait p = void $ waitForProcess $ processHandle p
+wait :: MonadPwn m => Process -> m ()
+wait p = liftIO $ void $ waitForProcess $ processHandle p
 
-close :: Process -> IO ()
-close = terminateProcess . processHandle
+close :: MonadPwn m => Process -> m ()
+close = liftIO . terminateProcess . processHandle
 
-shutdown :: Process -> IO ()
+shutdown :: MonadPwn m => Process -> m ()
 shutdown = close

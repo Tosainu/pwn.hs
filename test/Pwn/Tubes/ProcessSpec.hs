@@ -9,14 +9,16 @@ import           Pwn.Tubes
 import           System.IO.Error       (isEOFError)
 import           Test.Hspec
 
+import           Pwn.Config
+
 main :: IO ()
 main = hspec spec
 
 withEcho :: (Process -> IO ()) -> IO ()
-withEcho = bracket (process "echo" [teststr]) wait
+withEcho = bracket (pwn $ process "echo" [teststr]) (pwn . wait)
 
 withCat :: (Process -> IO ()) -> IO ()
-withCat = bracket (process "cat" []) close
+withCat = bracket (pwn $ process "cat" []) (pwn . close)
 
 teststr :: String
 teststr = teststr1 ++ "\n" ++ teststr2
@@ -32,41 +34,41 @@ spec = do
   around withEcho $ describe "Pwn.Tubes.Process.recv*" $ do
     it "recv" $ \proc -> do
       let s = BS.pack $ teststr ++ "\n"
-      r <- recv proc
+      r <- pwn $ recv proc
       r `shouldBe` s
 
     it "recvn" $ \proc -> do
       let s1 = BS.pack $ take 3 teststr
           s2 = BS.pack $ take 3 $ drop 3 teststr
-      r1 <- recvn proc 3
+      r1 <- pwn $ recvn proc 3
       r1 `shouldBe` s1
 
-      r2 <- recvn proc 3
+      r2 <- pwn $ recvn proc 3
       r2 `shouldBe` s2
 
-    it "recvn EOFerror" $ \proc -> do
-      recvn proc 999 `shouldThrow` isEOFError
+    it "recvn EOFerror" $ \proc ->
+      pwn (recvn proc 999) `shouldThrow` isEOFError
 
     it "recvline" $ \proc -> do
       let s = BS.pack $ teststr1 ++ "\n"
-      r <- recvline proc
+      r <- pwn $ recvline proc
       r `shouldBe` s
 
     it "recvuntil" $ \proc -> do
       let s = BS.pack $ drop 3 teststr1
-      r <- recvuntil proc s
+      r <- pwn $ recvuntil proc s
       r `shouldBe` BS.pack teststr1
 
   around withCat $ describe "Pwn.Tubes.Process.send*" $ do
     it "send" $ \proc -> do
       let s = BS.pack teststr
-      send proc s
-      r <- recv proc
+      pwn $ send proc s
+      r <- pwn $ recv proc
       r `shouldBe` s
 
     it "sendline" $ \proc -> do
-      let s1 = BS.pack $ teststr1
+      let s1 = BS.pack teststr1
           s2 = BS.pack $ teststr1 ++ "\n"
-      sendline proc s1
-      r <- recv proc
+      pwn $ sendline proc s1
+      r <- pwn $ recv proc
       r `shouldBe` s2

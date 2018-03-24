@@ -3,10 +3,12 @@ module Pwn.Tubes.Socket
   , remote
   ) where
 
+import           Control.Monad.IO.Class
 import           Data.Monoid            ((<>))
 import qualified Network.Socket         as NS
 import           System.IO
 
+import           Pwn.Config
 import           Pwn.Log
 import qualified Pwn.Tubes.Tube         as T
 
@@ -22,23 +24,23 @@ instance T.Tube Socket where
   close        = close
   shutdown     = shutdown
 
-remote :: String -> Int -> IO Socket
+remote :: MonadPwn m => String -> Int -> m Socket
 remote addr port = do
   let logstr = "Opening connection to " <> addr <> " on port " <> show port
   status logstr
-  ai <- head <$> NS.getAddrInfo Nothing (Just addr) (Just $ show port)
-  sock <- NS.socket (NS.addrFamily ai) NS.Stream NS.defaultProtocol
-  NS.connect sock (NS.addrAddress ai)
-  hsock <- NS.socketToHandle sock ReadWriteMode
-  hSetBuffering hsock NoBuffering
+  ai <- liftIO $ head <$> NS.getAddrInfo Nothing (Just addr) (Just $ show port)
+  sock <- liftIO $ NS.socket (NS.addrFamily ai) NS.Stream NS.defaultProtocol
+  liftIO $ NS.connect sock (NS.addrAddress ai)
+  hsock <- liftIO $ NS.socketToHandle sock ReadWriteMode
+  liftIO $ hSetBuffering hsock NoBuffering
   success $ logstr <> ": Done"
   return $ Socket addr port hsock
 
-wait :: Socket -> IO ()
+wait :: MonadPwn m => Socket -> m ()
 wait _ = error "not implemented yet"
 
-close :: Socket -> IO ()
-close = hClose . socketHandle
+close :: MonadPwn m => Socket -> m ()
+close = liftIO . hClose . socketHandle
 
-shutdown :: Socket -> IO ()
+shutdown :: MonadPwn m => Socket -> m ()
 shutdown = close

@@ -7,7 +7,10 @@ module Pwn.Log
   , warning
   ) where
 
+import           Control.Monad.IO.Class
 import           System.Console.ANSI
+
+import           Pwn.Config
 
 type Symbol = (String, Color)
 
@@ -19,23 +22,23 @@ printSymbol (sym, color) = do
   setSGR [Reset]
   putStr "] "
 
-message :: Symbol -> String -> IO ()
-message sym msg = printSymbol sym >> putStrLn msg
+message :: MonadPwn m => Symbol -> String -> m ()
+message sym msg = liftIO $ printSymbol sym >> putStrLn msg
 
-status :: String -> IO ()
+status :: MonadPwn m => String -> m ()
 status = message ("x", Magenta)
 
-success :: String -> IO ()
+success :: MonadPwn m => String -> m ()
 success = message ("+", Green)
 
-failure :: String -> IO ()
+failure :: MonadPwn m => String -> m ()
 failure = message ("-", Red)
 
-debug :: String -> IO ()
+debug :: MonadPwn m => String -> m ()
 debug = message ("DEBUG", Red)
 
-info :: String -> IO ()
+info :: MonadPwn m => String -> m ()
 info = message ("*", Blue)
 
-warning :: String -> IO ()
+warning :: MonadPwn m => String -> m ()
 warning = message ("!", Yellow)
