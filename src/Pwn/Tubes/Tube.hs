@@ -1,16 +1,17 @@
 module Pwn.Tubes.Tube where
 
-import           Control.Concurrent           (forkIO, killThread)
+import           Control.Concurrent      (forkIO, killThread)
+import           Control.Concurrent.MVar
+import           Control.Monad           (when)
 import           Control.Monad.IO.Class
-import           Control.Monad.Trans.Resource
-import qualified Data.ByteString.Char8        as BS
-import           Data.Conduit                 (runConduit, (.|))
-import           Data.Conduit.Binary          (sinkHandle, sourceHandle)
+import qualified Data.ByteString.Char8   as BS
+import           Data.Conduit            (connect)
+import           Data.Conduit.Binary     (sinkHandle, sourceHandle)
 import           System.IO
 
 import           Pwn.Config
 import           Pwn.Log
-import           Util                         (eofError)
+import           Util                    (eofError)
 
 class Tube a where
   inputHandle  :: a -> Handle
@@ -48,13 +49,15 @@ sendline tube = send tube . appendNL
 
 interactive :: (MonadPwn m, Tube a) => a -> m ()
 interactive tube = do
-  cfg <- getPwnConfig
-  let info' = pwnWith cfg . info
   info "Entering interactive mode"
-  liftIO $ runResourceT $ do
-    (rthread, _) <- allocate (forkIO $ do
-      runResourceT $ runConduit $ sourceHandle (outputHandle tube) .| sinkHandle stdout
-      info' "Connection closed") killThread
-    runConduit $ sourceHandle stdin .| sinkHandle (inputHandle tube)
-    release rthread
+  r <- liftIO $ do
+    mv <- newEmptyMVar
+    rx <- forkIO $ do
+      sourceHandle (outputHandle tube) `connect` sinkHandle stdout
+      putMVar mv True
+    tx <- forkIO $ do
+      sourceHandle stdin `connect` sinkHandle (inputHandle tube)
+      putMVar mv False
+    takeMVar mv <* mapM_ killThread [rx, tx]
+  when r $ warning "Connection may be closed"
   info "Leaving interactive mode"
