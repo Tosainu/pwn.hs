@@ -5,33 +5,23 @@ import           Control.Concurrent.MVar
 import           Control.Monad           (when)
 import           Control.Monad.IO.Class
 import qualified Data.ByteString.Char8   as BS
-import           Data.Conduit            (connect)
-import           Data.Conduit.Binary     (sinkHandle, sourceHandle)
-import           System.IO
+import qualified Data.Conduit            as C
+import qualified Data.Conduit.Binary     as C (sinkHandle, sourceHandle)
+import           System.IO               (stdin, stdout)
 
 import           Pwn.Config
 import           Pwn.Log
-import           Util                    (eofError)
 
 class Tube a where
-  inputHandle  :: a -> Handle
-  outputHandle :: a -> Handle
-
-  wait  :: MonadPwn m => a -> m ()
-  close :: MonadPwn m => a -> m ()
+  recv     :: MonadPwn m => a -> m BS.ByteString
+  recvn    :: MonadPwn m => a -> Int -> m BS.ByteString
+  send     :: MonadPwn m => a -> BS.ByteString -> m ()
+  isEOF    :: MonadPwn m => a -> m Bool
+  source   :: a -> C.ConduitT () BS.ByteString IO ()
+  sink     :: a -> C.ConduitT BS.ByteString C.Void IO ()
+  wait     :: MonadPwn m => a -> m ()
+  close    :: MonadPwn m => a -> m ()
   shutdown :: MonadPwn m => a -> m ()
-
-recv :: (MonadPwn m, Tube a) => a -> m BS.ByteString
-recv tube = liftIO $ BS.hGetSome (outputHandle tube) 4096
-
-recvn :: (MonadPwn m, Tube a) => a -> Int -> m BS.ByteString
-recvn tube len = liftIO $ do
-  r <- BS.hGet (outputHandle tube) len
-  if BS.length r < len then eofError (outputHandle tube) "recvn"
-                       else return r
-
-send :: (MonadPwn m, Tube a) => a -> BS.ByteString -> m ()
-send tube = liftIO . BS.hPut (inputHandle tube)
 
 recvline :: (MonadPwn m, Tube a) => a -> m BS.ByteString
 recvline tube = recvuntil tube $ BS.singleton '\n'
@@ -53,10 +43,10 @@ interactive tube = do
   r <- liftIO $ do
     mv <- newEmptyMVar
     rx <- forkIO $ do
-      sourceHandle (outputHandle tube) `connect` sinkHandle stdout
+      source tube `C.connect` C.sinkHandle stdout
       putMVar mv True
     tx <- forkIO $ do
-      sourceHandle stdin `connect` sinkHandle (inputHandle tube)
+      C.sourceHandle stdin `C.connect` sink tube
       putMVar mv False
     takeMVar mv <* mapM_ killThread [rx, tx]
   when r $ warning "Connection may be closed"

@@ -5,6 +5,8 @@ module Pwn.Tubes.Process
 
 import           Control.Monad            (void)
 import           Control.Monad.IO.Class
+import qualified Data.ByteString.Char8    as BS
+import qualified Data.Conduit.Binary      as C (sinkHandle, sourceHandle)
 import           Data.Monoid              ((<>))
 import           System.IO
 import           System.Process
@@ -23,11 +25,15 @@ data Process = Process { commandName   :: FilePath
                        }
 
 instance T.Tube Process where
-  inputHandle  = stdinHandle
-  outputHandle = stdoutHandle
-  wait         = wait
-  close        = close
-  shutdown     = shutdown
+  recv s    = liftIO $ BS.hGetSome (stdoutHandle s) 4096
+  recvn s n = liftIO $ BS.hGet (stdoutHandle s) n
+  send s    = liftIO . BS.hPut (stdinHandle s)
+  isEOF c   = liftIO $ (||) <$> hIsEOF (stdinHandle c) <*> hIsEOF (stdoutHandle c)
+  source    = C.sourceHandle . stdoutHandle
+  sink      = C.sinkHandle . stdinHandle
+  wait      = wait
+  close     = close
+  shutdown  = shutdown
 
 -- https://stackoverflow.com/a/27388709
 getPid :: ProcessHandle -> IO (Maybe Int)

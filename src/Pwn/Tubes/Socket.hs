@@ -4,6 +4,8 @@ module Pwn.Tubes.Socket
   ) where
 
 import           Control.Monad.IO.Class
+import qualified Data.ByteString.Char8  as BS
+import qualified Data.Conduit.Binary    as C (sinkHandle, sourceHandle)
 import           Data.Monoid            ((<>))
 import qualified Network.Socket         as NS
 import           System.IO
@@ -18,11 +20,15 @@ data Socket = Socket { address      :: String
                      }
 
 instance T.Tube Socket where
-  inputHandle  = socketHandle
-  outputHandle = socketHandle
-  wait         = wait
-  close        = close
-  shutdown     = shutdown
+  recv s    = liftIO $ BS.hGetSome (socketHandle s) 4096
+  recvn s n = liftIO $ BS.hGet (socketHandle s) n
+  send s    = liftIO . BS.hPut (socketHandle s)
+  isEOF     = liftIO . hIsEOF . socketHandle
+  source    = C.sourceHandle . socketHandle
+  sink      = C.sinkHandle . socketHandle
+  wait      = wait
+  close     = close
+  shutdown  = shutdown
 
 remote :: MonadPwn m => String -> Int -> m Socket
 remote addr port = do
