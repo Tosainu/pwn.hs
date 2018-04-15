@@ -39,7 +39,11 @@ packages:
 - .
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
-extra-deps: []
+extra-deps:
+  - git: https://github.com/portnov/libssh2-hs.git
+    commit: d59436489d563242736e72a07fe910a639be316f
+    subdirs:
+      - libssh2
 
 # Override default flag values for local packages and extra-deps
 flags: {}

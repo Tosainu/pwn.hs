@@ -33,6 +33,7 @@ library:
     - conduit-extra
     - exceptions
     - filepath
+    - libssh2
     - network
     - process
     - unix
