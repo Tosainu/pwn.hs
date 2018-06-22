@@ -9,6 +9,11 @@ github:     Tosainu/pwn.hs
 extra-source-files:
   - README.md
 
+flags:
+  enable-ssh-client:
+    manual: true
+    default: false
+
 ghc-options: -Wall
 
 dependencies:
@@ -27,16 +32,27 @@ library:
     - Pwn.Log
     - Pwn.Packing
     - Pwn.Tubes
+  other-modules:
+    - Pwn.Tubes.Process
+    - Pwn.Tubes.Socket
+    - Pwn.Tubes.Tube
+    - Util
   dependencies:
     - ansi-terminal
     - conduit
     - conduit-extra
     - exceptions
     - filepath
-    - libssh2
     - network
     - process
     - unix
+  when:
+    - condition: flag(enable-ssh-client)
+      other-modules:
+        - Pwn.Tubes.SSH
+      dependencies:
+        - libssh2
+      cpp-options: -DENABLE_SSH_CLIENT
 
 tests:
   pwn-test:
