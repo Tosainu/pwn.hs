@@ -33,7 +33,7 @@ install:
   - stack --no-terminal exec ghc -- --version
 
 script:
-  - stack --no-terminal test :pwn-test --coverage
+  - stack --no-terminal test :pwn-test --coverage --flag pwn:enable-ssh-client
 
 after_script:
   - shc pwn pwn-test
