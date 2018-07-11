@@ -3,22 +3,21 @@ module Pwn.Tubes.Process
   , process
   ) where
 
-import           Control.Monad            (void)
+import           Control.Monad          (void)
 import           Control.Monad.IO.Class
-import qualified Data.ByteString.Char8    as BS
-import qualified Data.Conduit.Binary      as C (sinkHandle, sourceHandle)
-import           Data.Monoid              ((<>))
+import qualified Data.ByteString.Char8  as BS
+import qualified Data.Conduit.Binary    as C (sinkHandle, sourceHandle)
+import           Data.Monoid            ((<>))
 import           System.IO
 import           System.Process
-import           System.Process.Internals
 
 import           Pwn.Config
 import           Pwn.Log
-import qualified Pwn.Tubes.Tube           as T
+import qualified Pwn.Tubes.Tube         as T
 
 data Process = Process { commandName   :: FilePath
                        , commandArgs   :: [String]
-                       , processID     :: Int
+                       , processID     :: Pid
                        , stdinHandle   :: Handle
                        , stdoutHandle  :: Handle
                        , processHandle :: ProcessHandle
@@ -34,13 +33,6 @@ instance T.Tube Process where
   wait      = wait
   close     = close
   shutdown  = shutdown
-
--- https://stackoverflow.com/a/27388709
-getPid :: ProcessHandle -> IO (Maybe Int)
-getPid ph = withProcessHandle ph $ \ph_ ->
-  return $ case ph_ of
-                OpenHandle x -> Just $ fromIntegral x
-                _            -> Nothing
 
 process :: MonadPwn m => FilePath -> [String] -> m Process
 process cmd args = do
