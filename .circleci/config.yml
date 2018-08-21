@@ -51,4 +51,4 @@ jobs:
           paths:
             - ~/build/.stack-work
 
-      - run: shc pwn pwn-test
+      - run: shc --repo-token="$COVERALLS_TOKEN" pwn pwn-test
