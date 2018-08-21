@@ -1,0 +1,54 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/build
+    docker:
+      - image: haskell:8.4.3
+    steps:
+      - run:
+          name: Install some packages
+          command: |
+            apt-get update
+            mkdir -p /usr/share/man/man1
+            apt-get install -y curl git libssh2-1-dev openssh-client pkg-config
+
+      - run: mkdir -p ~/.local/bin
+      - run: curl -L https://github.com/rubik/stack-hpc-coveralls/releases/download/v0.0.4.0/shc-linux-x64-8.0.1.tar.bz2 | tar jx -C ~/.local/bin
+
+      - checkout
+      - run: git submodule sync --recursive
+      - run: git submodule update --recursive --init
+
+      - restore_cache:
+          keys:
+            - stack-v1-{{ arch }}-{{ checksum "stack.yaml" }}-{{ checksum "package.yaml" }}
+            - stack-v1-{{ arch }}-{{ checksum "stack.yaml" }}-
+
+      - restore_cache:
+          keys:
+            - stack-work-v1-{{ arch }}-{{ checksum "stack.yaml" }}-{{ checksum "package.yaml" }}
+
+      - run:
+          command: stack --no-terminal build --flag pwn:enable-ssh-client
+          no_output_timeout: 30m
+
+      - save_cache:
+          key: stack-v1-{{ arch }}-{{ checksum "stack.yaml" }}-
+          paths:
+            - ~/.stack
+
+      - run:
+          command: stack --no-terminal test :pwn-test --coverage --flag pwn:enable-ssh-client
+          no_output_timeout: 30m
+
+      - save_cache:
+          key: stack-v1-{{ arch }}-{{ checksum "stack.yaml" }}-{{ checksum "package.yaml" }}
+          paths:
+            - ~/.stack
+
+      - save_cache:
+          key: stack-work-v1-{{ arch }}-{{ checksum "stack.yaml" }}-{{ checksum "package.yaml" }}
+          paths:
+            - ~/build/.stack-work
+
+      - run: shc pwn pwn-test
