@@ -3,7 +3,7 @@ jobs:
   build:
     working_directory: ~/build
     docker:
-      - image: haskell:8.4.3
+      - image: fpco/stack-build:lts-13.16
     steps:
       - run:
           name: Install some packages
