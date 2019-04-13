@@ -17,7 +17,7 @@ import qualified Pwn.Tubes.Tube         as T
 
 data Process = Process { commandName   :: FilePath
                        , commandArgs   :: [String]
-                       , processID     :: Pid
+                       , processID     :: Maybe Pid
                        , stdinHandle   :: Handle
                        , stdoutHandle  :: Handle
                        , processHandle :: ProcessHandle
@@ -38,14 +38,19 @@ process :: MonadPwn m => FilePath -> [String] -> m Process
 process cmd args = do
   let logstr = "Starting process '" <> cmd <> "'"
   status logstr
-  (Just ih, Just oh, _, ph) <-
-    liftIO $ createProcess (proc cmd args) { std_in  = CreatePipe
-                                           , std_out = CreatePipe
-                                           }
-  Just pid <- liftIO $ getPid ph
-  success $ logstr <> ": Done (pid " <> show pid <> ")"
-  liftIO $ mapM_ (`hSetBuffering` NoBuffering) [ ih, oh ]
-  return $ Process cmd args pid ih oh ph
+  p <- liftIO $ startProcess cmd args
+  success $ logstr <> ": Done (pid " <> (maybe "?" show (processID p)) <> ")"
+  return p
+
+startProcess :: FilePath -> [String] -> IO Process
+startProcess cmd args =
+    startProcess' =<< createProcess (proc cmd args) { std_in = CreatePipe , std_out = CreatePipe }
+  where
+    startProcess' (Just ih, Just oh, _, ph) = do
+      pid <- getPid ph
+      mapM_ (`hSetBuffering` NoBuffering) [ ih, oh ]
+      return $ Process cmd args pid ih oh ph
+    startProcess' _ = error "startProcess: createProcess failed"
 
 wait :: MonadPwn m => Process -> m ()
 wait p = liftIO $ void $ waitForProcess $ processHandle p
