@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: saturday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 50
+    versioning-strategy: increase
+    groups:
+      fontawesome:
+        patterns:
+          - "@fortawesome/*"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: saturday
+      time: "09:00"
+      timezone: Asia/Tokyo
+  - package-ecosystem: gitsubmodule
+    directory: /
+    schedule:
+      interval: weekly
+      day: saturday
+      time: "09:00"
+      timezone: Asia/Tokyo

@@ -1,6 +1,6 @@
 # pwn
 
-[![CircleCI](https://circleci.com/gh/Tosainu/pwn.hs.svg?style=svg)](https://circleci.com/gh/Tosainu/pwn.hs) [![Coverage Status](https://coveralls.io/repos/github/Tosainu/pwn.hs/badge.svg)](https://coveralls.io/github/Tosainu/pwn.hs)
+[![Coverage Status](https://coveralls.io/repos/github/Tosainu/pwn.hs/badge.svg)](https://coveralls.io/github/Tosainu/pwn.hs)
 
 ## Usage
 

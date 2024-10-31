@@ -1,0 +1,44 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install apt packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libssh2-1-dev
+      - name: Install Stack
+        run: |
+          cd "$(mktemp -d)"
+          curl -L https://github.com/commercialhaskell/stack/releases/download/v3.1.1/stack-3.1.1-linux-x86_64-bin -o stack
+          echo '8548289bca5f3b19ce363a6b2aef603cbebf190fdf2c91d4f21e9bd070c506ea  stack' | sha256sum -c
+          mkdir -p ~/.local/bin
+          mv stack ~/.local/bin/
+          chmod a+x ~/.local/bin/stack
+          stack --version
+      - name: Install SHC
+        run: |
+          cd "$(mktemp -d)"
+          curl -L https://github.com/rubik/stack-hpc-coveralls/releases/download/v0.0.7.0/shc-Linux-X64.tar.bz2 -o shc.tar.bz2
+          echo '9dac3d55aedfdf1d711e1d66fb2fec6d6c24f3301ab01dfccb543a6beec5de37  shc.tar.bz2' | sha256sum -c
+          mkdir -p ~/.local/bin
+          tar xf shc.tar.bz2 -C ~/.local/bin
+      - id: cache-stack
+        uses: actions/cache@v4.1.2
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-global-
+      - run: stack --no-terminal build --flag pwn:enable-ssh-client
+      - run: stack --no-terminal test :pwn-test --coverage --flag pwn:enable-ssh-client
+      - run: shc --repo-token="${{ secrets.COVERALLS_TOKEN }}" pwn pwn-test
