@@ -7,7 +7,6 @@ import           Control.Monad          (void)
 import           Control.Monad.IO.Class
 import qualified Data.ByteString.Char8  as BS
 import qualified Data.Conduit.Binary    as C (sinkHandle, sourceHandle)
-import           Data.Monoid            ((<>))
 import           System.IO
 import           System.Process
 

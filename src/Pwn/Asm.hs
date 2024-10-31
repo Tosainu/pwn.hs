@@ -8,7 +8,6 @@ import           Control.Monad
 import           Control.Monad.Catch
 import           Control.Monad.Reader
 import qualified Data.ByteString.Char8 as BS
-import           Data.Monoid           ((<>))
 import           System.FilePath
 
 import           Pwn.Config

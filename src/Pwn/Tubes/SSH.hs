@@ -15,7 +15,6 @@ import           Control.Monad                      (when)
 import           Control.Monad.IO.Class
 import qualified Data.ByteString.Char8              as BS
 import qualified Data.Conduit                       as C
-import           Data.Monoid                        ((<>))
 import qualified Network.SSH.Client.LibSSH2         as S
 import qualified Network.SSH.Client.LibSSH2.Foreign as S
 
