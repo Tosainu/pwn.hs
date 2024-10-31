@@ -22,7 +22,7 @@ import           Pwn.Config
 import           Pwn.Log
 import qualified Pwn.Tubes.Tube                     as T
 
-data SSHProcess = SSHProcess { channel :: S.Channel }
+newtype SSHProcess = SSHProcess { channel :: S.Channel }
 
 instance T.Tube SSHProcess where
   recv s    = T.recvn s 4096

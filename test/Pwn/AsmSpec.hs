@@ -42,24 +42,24 @@ spec = do
       let src = "xor ebx, ebx ; mov eax, 0x1 ; int 0x80"
           bin = "\x31\xdb\xb8\x01\x00\x00\x00\xcd\x80"
       ret <- pwnWith linux64Config $ asm src
-      ret `shouldBe` (Right bin)
+      ret `shouldBe` Right bin
 
     it "assemble x86-64 code" $ do
       let src = "xor rdi, rdi ; mov rax, 0x3c ; syscall"
           bin = "\x48\x31\xff\x48\xc7\xc0\x3c\x00\x00\x00\x0f\x05"
       ret <- pwnWith linux64Config $ asm src
-      ret `shouldBe` (Right bin)
+      ret `shouldBe` Right bin
 
     it "assemble invalid code" $ do
       ret1 <- pwnWith linux32Config $ asm "nyanyanya"
-      (isLeft ret1) `shouldBe` True
+      isLeft ret1 `shouldBe` True
 
       ret2 <- pwnWith linux64Config $ asm "nyanyanya"
-      (isLeft ret2) `shouldBe` True
+      isLeft ret2 `shouldBe` True
 
     it "assemble with invalid config" $ do
       ret <- pwnWith invalidConfig $ asm "nop"
-      (isLeft ret) `shouldBe` True
+      isLeft ret `shouldBe` True
 
   describe "Pwn.Asm.disasm" $ do
     it "disassemble i386 code" $ do
@@ -82,4 +82,4 @@ spec = do
 
     it "disassemble with invalid config" $ do
       ret <- pwnWith invalidConfig $ disasm "'x90"
-      (isLeft ret) `shouldBe` True
+      isLeft ret `shouldBe` True

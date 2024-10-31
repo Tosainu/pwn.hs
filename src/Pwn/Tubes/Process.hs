@@ -38,7 +38,7 @@ process cmd args = do
   let logstr = "Starting process '" <> cmd <> "'"
   status logstr
   p <- liftIO $ startProcess cmd args
-  success $ logstr <> ": Done (pid " <> (maybe "?" show (processID p)) <> ")"
+  success $ logstr <> ": Done (pid " <> maybe "?" show (processID p) <> ")"
   return p
 
 startProcess :: FilePath -> [String] -> IO Process
