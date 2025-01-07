@@ -42,3 +42,4 @@ jobs:
       - run: stack --no-terminal build --flag pwn:enable-ssh-client
       - run: stack --no-terminal test :pwn-test --coverage --flag pwn:enable-ssh-client
       - run: shc --repo-token="${{ secrets.COVERALLS_TOKEN }}" pwn pwn-test
+        if: github.secret_source == 'Actions'
