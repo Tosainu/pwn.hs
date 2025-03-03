@@ -33,7 +33,7 @@ jobs:
           mkdir -p ~/.local/bin
           tar xf shc.tar.bz2 -C ~/.local/bin
       - id: cache-stack
-        uses: actions/cache@v4.2.0
+        uses: actions/cache@v4.2.2
         with:
           path: ~/.stack
           key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}
